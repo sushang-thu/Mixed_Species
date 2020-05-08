@@ -53,5 +53,8 @@ For my test, I will get `Filtered_bams` folder under the folder `human` with the
 - Test_hg19_NRAS_Filtered.bam.bai
 - XenofilteR.log
 
+Here if you want an alternative output name instead of copying the input name string, you can specify the names in the parameter `output.names`.
+For example, `output.names = "test"`
+
 For the human as graft, XenofilteR "Filtered 59 read pairs out of 645  -  9.15 Percent";
 For the mouse as graft, XenofilteR "Filtered 185 read pairs out of 233  -  79.4 Percent";
