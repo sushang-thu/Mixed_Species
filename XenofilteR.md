@@ -30,7 +30,7 @@ sample.list2 <- rbind(sample2)
 ```
 To swap the input order, you can also realize in R without manully input again.
 
-`sample.list2 <- sample.list[c(2,1)]`
+`sample.list2 <- sample.list[,c(2,1)]`
 
 Create 2 folders named human and mouse respectively. Then run the XenofilteR. Remember:
 XenofilteR will filter out all reads that map to host only or map both to host and graft, so only graft-specific reads will be left after filteration.
