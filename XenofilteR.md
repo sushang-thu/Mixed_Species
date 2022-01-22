@@ -1,4 +1,5 @@
 Here I will use XenofilteR to pickup human-specific reads and mouse-specific reads from two test files.
+For preparation of input files for XenofilteR in your project, please refer to another md file (From splitted FASTQ to XenofilteR).
 Please fork or clone the original XenofilteR package via https://github.com/PeeperLab/XenofilteR
 This is an R package.
 ```
@@ -16,6 +17,10 @@ Download the test files or use your own files. Test files [link](https://github.
 Use setwd or cd into the folder that contains your sorted bam files.
 
 The XenofilteR requires you to provide the sorted bam files aligned to human or mouse reference genome separately from the same raw-read fastq.
+
+!!!Important here!!!
+XenofilteR has a processing limit for the total lines of input, so you need to split your raw-reads fastq files into several smaller fastq files, align every fastq file to human and mouse genome separately to get the sam, bam, sorted bam files, filter the sorted bam files with XenofilteR, and merge the filtered sorted bam files fo each sample.
+
 Then you can assign the host and graft simply by putting the sorted bam aligned to graft first then that to the host into a sample.list.
 
 Create a sample.list 
