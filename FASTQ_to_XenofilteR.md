@@ -63,5 +63,46 @@ seqkit split2 -s 50000000 -O fastq_split/ -1 $name"_R1_001.fastq.gz" -2 $name"_R
 done
 ```
 
+xenograft="/mnt/e/Rawdata/Yawei/Genewiz_2021"
+cd $xenograft/fastq_split
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S sam/BT1_human.part_001.sam 
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S sam/BT1_mouse.part_001.sam
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S sam/BT1_human.part_002.sam 
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S sam/BT1_mouse.part_002.sam
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S sam/BT1_human.part_003.sam 
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S sam/BT1_mouse.part_003.sam
+
+cd ../sam
+for i in *.sam
+do
+        samtools view -S $i -b > ../bam/$(basename $i .sam).bam
+done
+
+cd ../bam
+for i in *.bam
+do
+        samtools sort $i -o ../sortbam/$(basename $i .bam).sort.bam
+done
+
+cd ../sortbam
+Rscript --vanilla ~/Xenotest.R
+# install the prerequisite packages first!
+# BiocManager::install("Rsamtools") # don't forget the quotation marks!
+# BiocManager::install(c("GenomicAlignments", "BiocParallel", "futile.logger")) # c() is a fixed grammar for array in R language.
+
+library(XenofilteR)
+bp.param <- SnowParam(workers = 1, type = "SOCK")
+# sample.list creation
+# learn how to create via https://bookdown.org/ndphillips/YaRrr/creating-matrices-and-dataframes.html
+
+#setwd or cd into the folder that contains your sorted bam files.
+
+sample <- c("BT1_human.part_001.sort.bam","BT1_mouse.part_001.sort.bam")
+sample.list <- rbind(sample)
+sample.list2 <- 
+XenofilteR(sample.list, destination.folder = "./human", bp.param = bp.param, output.names = NULL)
+XenofilteR(sample.list2, destination.folder = "./mouse", bp.param = bp.param, output.names = NULL)
+
+
 hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_1.fastq" -2 $name"_2.fastq" -S /mnt/e/bioinfo/sam/$name.sam
 
