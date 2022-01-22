@@ -58,9 +58,10 @@ I am going to use a for loop.
 for i in *_R1_001.fastq.gz # This will exhaustively and non-repeatedly scan all the files ending with "_R1_001.fastq.gz"
 do
 var=$i # load the file name to a new object "var", you can name with other words. 
-name=${var%_*} # remove anything after "_"
-seqkit split2 -s 50000000 -O fastq_split/ -1 BT1_R1_001.fastq.gz -2 BT1_R2_001.fastq.gz
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_1.fastq" -2 $name"_2.fastq" -S /mnt/e/bioinfo/sam/$name.sam
+name=${var%%_*} # remove anything after the first "_"
+seqkit split2 -s 50000000 -O fastq_split/ -1 $name"_R1_001.fastq.gz" -2 $name"_R2_001.fastq.gz"
 done
 ```
+
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_1.fastq" -2 $name"_2.fastq" -S /mnt/e/bioinfo/sam/$name.sam
 
