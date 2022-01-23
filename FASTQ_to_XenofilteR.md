@@ -65,12 +65,12 @@ done
 
 xenograft="/mnt/e/Rawdata/Yawei/Genewiz_2021"
 cd $xenograft/fastq_split
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S sam/BT1_human.part_001.sam 
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S sam/BT1_mouse.part_001.sam
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S sam/BT1_human.part_002.sam 
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S sam/BT1_mouse.part_002.sam
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S sam/BT1_human.part_003.sam 
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S sam/BT1_mouse.part_003.sam
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S ../sam/BT1_human.part_001.sam 
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S ../sam/BT1_mouse.part_001.sam
+# hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S ../sam/BT1_human.part_002.sam 
+# hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S ../sam/BT1_mouse.part_002.sam
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S ../sam/BT1_human.part_003.sam 
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S ../sam/BT1_mouse.part_003.sam
 
 cd ../sam
 for i in *.sam
@@ -84,7 +84,47 @@ do
         samtools sort $i -o ../sortbam/$(basename $i .bam).sort.bam
 done
 
+xenograft="/mnt/e/Rawdata/Yawei/Genewiz_2021"
+cd $xenograft/fastq_split
+
+for i in *_R1_001.part_001.fastq.gz
+do
+var=$i # load the file name to a new object "var", you can name with other words. 
+name=${var%%_*} # remove anything after the first "_"
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_001.fastq.gz" -2 $name"_R2_001.part_001.fastq.gz" -S ../sam/$name"_human.part_001.sam
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_001.fastq.gz" -2 $name"_R2_001.part_001.fastq.gz" -S ../sam/$name"_mouse.part_001.sam 
+done
+
+for i in *_R1_001.part_002.fastq.gz
+do
+var=$i # load the file name to a new object "var", you can name with other words. 
+name=${var%%_*} # remove anything after the first "_"
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_002.fastq.gz" -2 $name"_R2_001.part_002.fastq.gz" -S ../sam/$name"_human.part_002.sam
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_002.fastq.gz" -2 $name"_R2_001.part_002.fastq.gz" -S ../sam/$name"_mouse.part_002.sam 
+done
+
+for i in *_R1_001.part_003.fastq.gz
+do
+var=$i # load the file name to a new object "var", you can name with other words. 
+name=${var%%_*} # remove anything after the first "_"
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_003.fastq.gz" -2 $name"_R2_001.part_003.fastq.gz" -S ../sam/$name"_human.part_003.sam
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_003.fastq.gz" -2 $name"_R2_001.part_003.fastq.gz" -S ../sam/$name"_mouse.part_003.sam 
+done
+
+cd ../sam
+for i in *.sam
+do
+        samtools view -S $i -b > ../bam/$(basename $i .sam).bam
+done
+
+cd ../bam
+for i in *.bam
+do
+        samtools sort $i -o ../sortbam/$(basename $i .bam).sort.bam
+done
 cd ../sortbam
+mkdir human
+mkdir mouse
 Rscript --vanilla ~/Xenotest.R
 # install the prerequisite packages first!
 # BiocManager::install("Rsamtools") # don't forget the quotation marks!
@@ -99,10 +139,15 @@ bp.param <- SnowParam(workers = 1, type = "SOCK")
 
 sample <- c("BT1_human.part_001.sort.bam","BT1_mouse.part_001.sort.bam")
 sample.list <- rbind(sample)
-sample.list2 <- 
+sample.list2 <- sample.list[,c(2,1)]
+XenofilteR(sample.list, destination.folder = "./human", bp.param = bp.param, output.names = NULL, MM_threshold = 8)
+XenofilteR(sample.list2, destination.folder = "./mouse", bp.param = bp.param, output.names = NULL, MM_threshold = 8)
+## The developer suggested setting the MM-threshold to 8 (default 4) for samples with PE150
+
+sample <- c("BT1_human.part_003.sort.bam","BT1_mouse.part_003.sort.bam")
+sample.list <- rbind(sample)
+sample.list2 <- sample.list[,c(2,1)]
 XenofilteR(sample.list, destination.folder = "./human", bp.param = bp.param, output.names = NULL)
 XenofilteR(sample.list2, destination.folder = "./mouse", bp.param = bp.param, output.names = NULL)
-
-
 hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_1.fastq" -2 $name"_2.fastq" -S /mnt/e/bioinfo/sam/$name.sam
 
