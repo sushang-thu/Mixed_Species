@@ -151,3 +151,25 @@ XenofilteR(sample.list, destination.folder = "./human", bp.param = bp.param, out
 XenofilteR(sample.list2, destination.folder = "./mouse", bp.param = bp.param, output.names = NULL)
 hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_1.fastq" -2 $name"_2.fastq" -S /mnt/e/bioinfo/sam/$name.sam
 
+codes for analysing filtered mouse reads
+
+cd /mnt/e/Rawdata/Yawei/Genewiz_2021/sortbam/mouse2/Filtered_bams/merged
+
+for i in for i in *_mouse.part_001.sort_Filtered.bam
+do
+var=$i # load the file name to a new object "var", you can name with other words. 
+name=${var%%_*} # remove anything after the first "_"
+samtools merge $name"_mouse_filtered.bam" $name*
+done
+
+featureCounts -T 8 -p -t exon -g gene_id \
+-a ~/mouse/gencode/gencode.vM28.annotation.gtf \
+-o 20220129mouseXenofilteR.txt \
+AP1_mouse_filtered.bam AP2_mouse_filtered.bam AP3_mouse_filtered.bam \
+BA2_mouse_filtered.bam BA3_mouse_filtered.bam BA4_mouse_filtered.bam \
+BT1_mouse_filtered.bam BT2_mouse_filtered.bam BT3_mouse_filtered.bam \
+OT3_mouse_filtered.bam OT5_mouse_filtered.bam OT6_mouse_filtered.bam \
+SQ2_mouse_filtered.bam SQ4_mouse_filtered.bam SQ5_mouse_filtered.bam
+
+
+
