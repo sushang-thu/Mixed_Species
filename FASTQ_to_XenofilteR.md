@@ -155,7 +155,7 @@ codes for analysing filtered mouse reads
 
 cd /mnt/e/Rawdata/Yawei/Genewiz_2021/sortbam/mouse2/Filtered_bams/merged
 
-for i in for i in *_mouse.part_001.sort_Filtered.bam
+for i in *_mouse.part_001.sort_Filtered.bam
 do
 var=$i # load the file name to a new object "var", you can name with other words. 
 name=${var%%_*} # remove anything after the first "_"
@@ -171,5 +171,128 @@ BT1_mouse_filtered.bam BT2_mouse_filtered.bam BT3_mouse_filtered.bam \
 OT3_mouse_filtered.bam OT5_mouse_filtered.bam OT6_mouse_filtered.bam \
 SQ2_mouse_filtered.bam SQ4_mouse_filtered.bam SQ5_mouse_filtered.bam
 
+
+## Install DESeq2
+
+## Load DESeq2
+library(DESeq2)
+
+## input
+## To run a DESeq analysis, you need three objects:
+## 1. cts: i.e. Counts of your gene expressions.
+## 2. coldata: i.e. Grouping info
+## 3. condition:
+
+setwd("E:/Rawdata/Yawei/Genewiz_2021/sortbam/human/Filtered_bams/bamonly/merged")
+
+## Load count matrix. Here I use the count matrix from FeatureCounts.
+reads <- read.table("20220217humanXenofilteR.txt",header = T,quote = "\t",skip = 1)
+reads2 <- read.csv("20220217humanXenofilteR.txt",header = T,sep = "",skip = 1)
+## both are fine
+
+## 
+cts_00 <- reads[,c(1,7:15)]
+colnames(cts_00)[2:10] <- c("BT1","BT2","BT3","OT3","OT5","OT6","SQ2","SQ4","SQ5")
+coldata_xeno <- data.frame(c(rep("BT",3),rep("OT",3),rep("SQ",3)))
+## Note that here we have 3 groups to run DESeq2 at the same time, later we can use the contrast function to specify which is the control group.
+## if you only have two groups, untreated vs treated, usually the first group will be taken as the untreated control.
+row.names(coldata_xeno) <- colnames(cts_00)[-1] # you dont need the first column, i.e. the gene id.
+colnames(coldata_xeno) <- "condition"
+head(coldata_xeno) # you will see the first 6 rows.
+# If you want to see the whole dataframe, you can click the object on the right window or use 
+View(coldata_xeno)
+## The order of samples in coldata matrix must be identical with the order in count matrix.
+
+rownames(cts_00) <- cts_00$Geneid
+cts <- cts_00[,-1]
+cts[1:6,1:3]# check the first 6 rows and 3 columns
+head(cts)# by default, check the first 6 rows
+## if the values in your count matrix are not all integers, then you need to round the values because DESeq2 only process integers.
+## cts <- round(cts) # round the values of cts and load into an updated version of cts
+## The count matrix from FeatureCounts has only integers so we dont need the round function here.
+
+## create the DESeqDataSet object, i.e., dds.
+dds <- DESeqDataSetFromMatrix(countData=cts,colData=coldata_xeno,design=~condition) # You can also name as dds_xeno or whatever.
+# only count non-zero counts
+dds <- dds[rowSums(counts(dds)) >= 10, ] # you may also use >=1
+## If I dont filter the low counts, the total genes will be 61533 but after filtering there are only 32103.
+dds <- DESeq(dds)
+res <- results(dds)
+res_BT2OT <- results(dds,contrast = c("condition","BT","OT")) ## Pay attention to the order of BT and OT, here the latter will be the control.
+summary(res_BT2OT)
+res_BT2OT
+# If you simply want to know how many genes have adjusted p vlues less than 0.1 (default)
+sum(res_BT2OT$padj < 0.1,na.rm = TRUE) ## You will get a total number of up and down genes from the summary.
+## Or you can adjust the cut off to 0.05
+res05 <- results(dds,contrast = c("condition","BT","OT"),alpha = 0.05)
+summary(res05)
+
+library(DESeq2)
+res_BT2SQ <- results(dds,contrast = c("condition","BT","SQ")) 
+res_OT2SQ <- results(dds,contrast = c("condition","OT","SQ")) 
+write.csv(res_BT2SQ,"BTvsSQ.csv",row.names = TRUE)
+write.csv(res_OT2SQ,"OTvsSQ.csv",row.names = TRUE)
+BTSQ <- read.csv("BTvsSQ.csv")
+OTSQ <- read.csv("OTvsSQ.csv")
+BTSQ[,1] <- gsub("\\..*","",BTSQ[,1])
+colnames(BTSQ)[1] <- "ensembl_gene_id"
+BTSQ_annot <- merge(BTSQ,humanID,by = "ensembl_gene_id")
+BTSQ_annot_pc <- subset(BTSQ_annot,gene_biotype == "protein_coding")
+
+OTSQ[,1] <- gsub("\\..*","",OTSQ[,1])
+colnames(OTSQ)[1] <- "ensembl_gene_id"
+OTSQ_annot <- merge(OTSQ,humanID,by = "ensembl_gene_id")
+OTSQ_annot_pc <- subset(OTSQ_annot,gene_biotype == "protein_coding")
+
+BTSQ_DE <- subset(BTSQ_annot_pc,abs(log2FoldChange) >= log2(1.5) & padj<=0.05)
+BTOT_DE <- subset(BTOT_annot_pc,abs(log2FoldChange) >= log2(1.5) & padj<=0.05)
+OTSQ_DE <- subset(OTSQ_annot_pc,abs(log2FoldChange) >= log2(1.5) & padj<=0.05)
+write.csv(BTOT_DE,"20220128BTOT_DE.csv",row.names = T)
+write.csv(BTSQ_DE,"20220128BTSQ_DE.csv",row.names = T)
+write.csv(OTSQ_DE,"20220128OTSQ_DE.csv",row.names = T)
+
+
+install.packages("dplyr","tidyverse")
+##separate(data = fc_BTOT,col = ensembl_gene_id,into = c("ensembl_gene_id","version"),sep = ".")
+write.csv(res_BT2OT,"BTvsOT.csv",row.names = TRUE)
+fc_BTOT <- read.csv("BTvsOT.csv")
+colnames(fc_BTOT)[1] <- "ensembl_gene_id"
+fc_BTOT[,8] <- gsub("\\..","",fc_BTOT[,1]) ## but those with version over 10 will be wrong.
+fc_BTOT[,8] <- gsub("\\..*","",fc_BTOT[,1]) ## Now I add an * and it works
+fc <- fc_BTOT[,c(8,2:7)]
+colnames(fc)[1] <- "ensembl_gene_id"
+
+## following needs verification
+
+fc <- separate(data = fc_BTOT,col = "ensembl_gene_id",into = c("ensembl_gene_id","version"),sep = ".")
+library(tidyverse)
+humanID <- read.csv("humanID.csv")
+##Note that ensembl gene ids in BTOT file have version info. We have to remove it.
+
+gsub("\\.\\d","", "a.1") # d specifiy numbers
+gsub("\\.\\d+","", "a.12") #more than 1 digits
+
+# I used to use tidyr but I lost the successful codes.
+
+BTOT_annot <- merge(fc,humanID,by = "ensembl_gene_id")
+BTOT_annot_pc <- subset(BTOT_annot,gene_biotype == "protein_coding")
+## Visualization
+
+## a single gene
+
+plotMA(res_BT2OT,ylim=c(-2,2))
+idx <- identify(res05$baseMean,res05$log2FoldChange)
+rownames(res05)[idx]
+## This takes some time. Not recommended.
+vsd <-vst(dds,blind = FALSE)
+plotPCA(vsd,intgroup=c("condition"))
+
+library(pheatmap)
+install.packages("pheatmap")
+ntd <- normTransform(dds)
+select <- order(rowMeans(counts(dds,normalized = TRUE)),decreasing = TRUE)[1:20]
+df <- as.data.frame(colData(dds)[,c("condition")])
+pheatmap(assay(ntd)[select,],cluster_rows = FALSE,show_rownames = FALSE,cluster_cols = FALSE,annotation_col = df)
+pheatmap(assay(vsd)[select,],cluster_rows = FALSE,show_rownames = FALSE,cluster_cols = FALSE,annotation_col = df)
 
 
