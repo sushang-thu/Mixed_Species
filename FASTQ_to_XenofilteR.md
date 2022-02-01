@@ -47,70 +47,60 @@ fastq_split/BT1_R2_001.part_003.fastq.gz  FASTQ   DNA   14,219,233  2,132,884,95
 
 Next, we are going to apply commands to other files.
 I have multiple pairs of fastq files.
-BT1_R1_001.fastq.gz 
-BT1_R2_001.fastq.gz
-BT2_R1_001.fastq.gz 
-BT2_R2_001.fastq.gz
+
+BT1_R1_001.fastq.gz vs BT1_R2_001.fastq.gz
+BT2_R1_001.fastq.gz vs BT2_R2_001.fastq.gz
 ...
 
-I am going to use a for loop.
+To save coding time, I am going to use a `for` loop.
 ```
+## Find the naming rules in your files
 for i in *_R1_001.fastq.gz # This will exhaustively and non-repeatedly scan all the files ending with "_R1_001.fastq.gz"
 do
-var=$i # load the file name to a new object "var", you can name with other words. 
-name=${var%%_*} # remove anything after the first "_"
+var=$i # load the file name to a new object "var", you can name with any other word as long as it does not conflict with system settings. 
+name=${var%%_*} # this code will remove anything after the first "_" in the string of object "var"
 seqkit split2 -s 50000000 -O fastq_split/ -1 $name"_R1_001.fastq.gz" -2 $name"_R2_001.fastq.gz"
 done
 ```
+Now every pair of seq reads will be splitted one by one.
 
+## Genomic alignment with hisat2
+```
 xenograft="/mnt/e/Rawdata/Yawei/Genewiz_2021"
 cd $xenograft/fastq_split
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S ../sam/BT1_human.part_001.sam 
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_001.fastq.gz -2 BT1_R2_001.part_001.fastq.gz -S ../sam/BT1_mouse.part_001.sam
-# hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S ../sam/BT1_human.part_002.sam 
-# hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_002.fastq.gz -2 BT1_R2_001.part_002.fastq.gz -S ../sam/BT1_mouse.part_002.sam
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S ../sam/BT1_human.part_003.sam 
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 BT1_R1_001.part_003.fastq.gz -2 BT1_R2_001.part_003.fastq.gz -S ../sam/BT1_mouse.part_003.sam
+## note that here I define an object called "xenograft" to store the directory of fastq files, so that I can quickly redirect to the folder by simply $xenograft
+## create folders named "sam", "bam","sortbam" with the command "mkdir" under the folder $xenograft
+```
 
-cd ../sam
-for i in *.sam
-do
-        samtools view -S $i -b > ../bam/$(basename $i .sam).bam
-done
-
-cd ../bam
-for i in *.bam
-do
-        samtools sort $i -o ../sortbam/$(basename $i .bam).sort.bam
-done
-
-xenograft="/mnt/e/Rawdata/Yawei/Genewiz_2021"
-cd $xenograft/fastq_split
-
+Now I am going to start the alignment, onto human or mouse reference genomes.
+```
 for i in *_R1_001.part_001.fastq.gz
 do
 var=$i # load the file name to a new object "var", you can name with other words. 
 name=${var%%_*} # remove anything after the first "_"
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_001.fastq.gz" -2 $name"_R2_001.part_001.fastq.gz" -S ../sam/$name"_human.part_001.sam
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_001.fastq.gz" -2 $name"_R2_001.part_001.fastq.gz" -S ../sam/$name"_mouse.part_001.sam 
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_001.fastq.gz" -2 $name"_R2_001.part_001.fastq.gz" -S ../sam/$name"_human.part_001.sam"
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_001.fastq.gz" -2 $name"_R2_001.part_001.fastq.gz" -S ../sam/$name"_mouse.part_001.sam" 
 done
 
 for i in *_R1_001.part_002.fastq.gz
 do
 var=$i # load the file name to a new object "var", you can name with other words. 
 name=${var%%_*} # remove anything after the first "_"
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_002.fastq.gz" -2 $name"_R2_001.part_002.fastq.gz" -S ../sam/$name"_human.part_002.sam
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_002.fastq.gz" -2 $name"_R2_001.part_002.fastq.gz" -S ../sam/$name"_mouse.part_002.sam 
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_002.fastq.gz" -2 $name"_R2_001.part_002.fastq.gz" -S ../sam/$name"_human.part_002.sam"
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_002.fastq.gz" -2 $name"_R2_001.part_002.fastq.gz" -S ../sam/$name"_mouse.part_002.sam"
 done
 
 for i in *_R1_001.part_003.fastq.gz
 do
 var=$i # load the file name to a new object "var", you can name with other words. 
 name=${var%%_*} # remove anything after the first "_"
-hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_003.fastq.gz" -2 $name"_R2_001.part_003.fastq.gz" -S ../sam/$name"_human.part_003.sam
-hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_003.fastq.gz" -2 $name"_R2_001.part_003.fastq.gz" -S ../sam/$name"_mouse.part_003.sam 
+hisat2 -p 4 -t -x ~/human/gencode/GRCh38.p13.genome.fa -1 $name"_R1_001.part_003.fastq.gz" -2 $name"_R2_001.part_003.fastq.gz" -S ../sam/$name"_human.part_003.sam"
+hisat2 -p 4 -t -x ~/mouse/gencode/GRCm39.genome.fa -1 $name"_R1_001.part_003.fastq.gz" -2 $name"_R2_001.part_003.fastq.gz" -S ../sam/$name"_mouse.part_003.sam" 
 done
+```
 
+### File convertion after alignment
+```
 cd ../sam
 for i in *.sam
 do
@@ -122,6 +112,8 @@ for i in *.bam
 do
         samtools sort $i -o ../sortbam/$(basename $i .bam).sort.bam
 done
+```
+
 cd ../sortbam
 mkdir human
 mkdir mouse
@@ -171,8 +163,10 @@ BT1_mouse_filtered.bam BT2_mouse_filtered.bam BT3_mouse_filtered.bam \
 OT3_mouse_filtered.bam OT5_mouse_filtered.bam OT6_mouse_filtered.bam \
 SQ2_mouse_filtered.bam SQ4_mouse_filtered.bam SQ5_mouse_filtered.bam
 
+## DESeq2 analyses
 
-## Install DESeq2
+```
+## Install DESeq2 in R if not already
 
 ## Load DESeq2
 library(DESeq2)
@@ -294,5 +288,5 @@ select <- order(rowMeans(counts(dds,normalized = TRUE)),decreasing = TRUE)[1:20]
 df <- as.data.frame(colData(dds)[,c("condition")])
 pheatmap(assay(ntd)[select,],cluster_rows = FALSE,show_rownames = FALSE,cluster_cols = FALSE,annotation_col = df)
 pheatmap(assay(vsd)[select,],cluster_rows = FALSE,show_rownames = FALSE,cluster_cols = FALSE,annotation_col = df)
-
+```
 
